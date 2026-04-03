@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pace Converter</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --card: #13131a;
+    --border: #1e1e2e;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f5;
+    --muted: #5a5a7a;
+    --input-bg: #1a1a28;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 60px;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 20%, rgba(232,255,71,0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(255,107,53,0.04) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .container { width: 100%; max-width: 390px; padding: 0 20px; position: relative; z-index: 1; }
+  .header { padding: 56px 0 32px; }
+  .header .eyebrow {
+    font-size: 11px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+  }
+  .header .eyebrow::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(to right, var(--accent), transparent); opacity: 0.4;
+  }
+  .header h1 {
+    font-family: 'Bebas Neue', sans-serif; font-size: 56px; letter-spacing: 2px; line-height: 0.9;
+    background: linear-gradient(135deg, #fff 30%, var(--muted) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .toggle-row { display: flex; gap: 8px; margin-bottom: 28px; }
+  .toggle-btn {
+    flex: 1; padding: 12px; border-radius: 12px; border: 1.5px solid var(--border);
+    background: var(--card); color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s ease;
+    text-align: center; -webkit-appearance: none; appearance: none;
+  }
+  .toggle-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  .input-card {
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 20px;
+    padding: 24px; margin-bottom: 16px; position: relative; overflow: hidden;
+  }
+  .input-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent);
+  }
+  .input-label { font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+  .time-input-row { display: flex; align-items: center; gap: 8px; }
+  .time-field { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .time-field label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+  .time-field input {
+    width: 100%; background: var(--input-bg); border: 1.5px solid var(--border);
+    border-radius: 12px; color: var(--text); font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px; letter-spacing: 2px; text-align: center; padding: 12px 8px;
+    outline: none; transition: border-color 0.2s; -webkit-appearance: none; appearance: none;
+  }
+  .time-field input:focus { border-color: var(--accent); }
+  .time-field input::placeholder { color: var(--muted); opacity: 0.5; }
+  .colon { font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: var(--muted); padding-bottom: 6px; margin-top: 18px; }
+  .unit-badge {
+    display: inline-flex; align-items: center; gap: 6px; background: var(--input-bg);
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px;
+    font-size: 12px; font-weight: 500; color: var(--accent2); margin-top: 16px;
+  }
+  .convert-btn {
+    width: 100%; padding: 18px; background: var(--accent); color: #000;
+    font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px;
+    border: none; border-radius: 16px; cursor: pointer; transition: all 0.15s ease;
+    margin-bottom: 16px; -webkit-appearance: none; appearance: none;
+  }
+  .convert-btn:active { transform: scale(0.97); background: #d4e83d; }
+  .error-msg { display: none; color: var(--accent2); font-size: 12px; text-align: center; padding: 8px; margin-top: -8px; margin-bottom: 8px; }
+  .result-card {
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 20px;
+    padding: 28px 24px; opacity: 0; transform: translateY(12px);
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none;
+  }
+  .result-card.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .result-label { font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; }
+  .result-main { display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px; }
+  .result-pace { font-family: 'Bebas Neue', sans-serif; font-size: 64px; letter-spacing: 2px; color: var(--accent); line-height: 1; }
+  .result-unit { font-size: 14px; font-weight: 400; color: var(--muted); }
+  .result-speed-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .speed-icon { width: 32px; height: 32px; background: rgba(255,107,53,0.12); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .speed-info { display: flex; flex-direction: column; }
+  .speed-value { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1px; color: var(--accent2); line-height: 1; }
+  .speed-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .zones-row { display: flex; gap: 6px; margin-top: 16px; }
+  .zone-chip { flex: 1; background: var(--input-bg); border-radius: 8px; padding: 8px 4px; text-align: center; border: 1px solid var(--border); }
+  .zone-chip.highlighted { border-color: var(--accent); background: rgba(232,255,71,0.06); }
+  .zone-chip .zspeed { font-family: 'Bebas Neue', sans-serif; font-size: 15px; color: var(--text); letter-spacing: 1px; }
+  .zone-chip .zpace { font-size: 9px; color: var(--muted); letter-spacing: 0.5px; }
+  .zone-chip.highlighted .zspeed { color: var(--accent); }
+  .zones-title { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="eyebrow">Run Tool</div>
+    <h1>PACE<br>CONVERTER</h1>
+  </div>
+
+  <div class="toggle-row">
+    <button class="toggle-btn active" id="btn-mi" onclick="setMode('mi')">Mile → KM</button>
+    <button class="toggle-btn" id="btn-km" onclick="setMode('km')">KM → Mile</button>
+  </div>
+
+  <div class="input-card">
+    <div class="input-label" id="input-label">Mil Temposu Gir</div>
+    <div class="time-input-row">
+      <div class="time-field">
+        <label>DAK</label>
+        <input type="tel" id="minutes" placeholder="00" maxlength="2" inputmode="numeric" pattern="[0-9]*">
+      </div>
+      <div class="colon">:</div>
+      <div class="time-field">
+        <label>SAN</label>
+        <input type="tel" id="seconds" placeholder="00" maxlength="2" inputmode="numeric" pattern="[0-9]*">
+      </div>
+    </div>
+    <div class="unit-badge">
+      <span>📍</span>
+      <span id="unit-text">min / mil</span>
+    </div>
+  </div>
+
+  <div class="error-msg" id="error-msg">Geçerli bir tempo gir</div>
+
+  <button class="convert-btn" onclick="convert()">ÇEVİR</button>
+
+  <div class="result-card" id="result-card">
+    <div class="result-label" id="result-label">KM Temposu</div>
+    <div class="result-main">
+      <div class="result-pace" id="result-pace">—</div>
+      <div class="result-unit" id="result-unit">/km</div>
+    </div>
+    <div class="result-speed-row">
+      <div class="speed-icon">⚡</div>
+      <div class="speed-info">
+        <div class="speed-value" id="result-speed">—</div>
+        <div class="speed-label">km/saat hız</div>
+      </div>
+    </div>
+    <div style="margin-top:20px">
+      <div class="zones-title">Yakın Tempolar</div>
+      <div class="zones-row" id="zones-row"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var mode = 'mi';
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('btn-mi').classList.toggle('active', m === 'mi');
+    document.getElementById('btn-km').classList.toggle('active', m === 'km');
+    document.getElementById('input-label').textContent = m === 'mi' ? 'Mil Temposu Gir' : 'KM Temposu Gir';
+    document.getElementById('unit-text').textContent = m === 'mi' ? 'min / mil' : 'min / km';
+    document.getElementById('minutes').value = '';
+    document.getElementById('seconds').value = '';
+    document.getElementById('result-card').classList.remove('visible');
+    hideError();
+  }
+
+  function showError(msg) {
+    var el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideError() {
+    document.getElementById('error-msg').style.display = 'none';
+  }
+
+  function padTwo(n) {
+    return String(Math.floor(n)).padStart(2, '0');
+  }
+
+  function secondsToMMSS(totalSeconds) {
+    var m = Math.floor(totalSeconds / 60);
+    var s = Math.round(totalSeconds % 60);
+    if (s === 60) { m++; s = 0; }
+    return padTwo(m) + ':' + padTwo(s);
+  }
+
+  function cleanNum(id) {
+    var raw = document.getElementById(id).value.replace(/[^0-9]/g, '');
+    return raw === '' ? -1 : parseInt(raw, 10);
+  }
+
+  function convert() {
+    hideError();
+    var min = cleanNum('minutes');
+    var sec = cleanNum('seconds');
+
+    if (min === -1 && sec === -1) { showError('Dakika veya saniye gir'); return; }
+    if (min === -1) min = 0;
+    if (sec === -1) sec = 0;
+    if (sec >= 60) { showError('Saniye 0-59 arasında olmalı'); return; }
+    if (min === 0 && sec === 0) { showError('Tempo 00:00 olamaz'); return; }
+
+    var totalSeconds = min * 60 + sec;
+    var MI_TO_KM = 1.60934;
+    var convertedSec, speedKmh;
+
+    if (mode === 'mi') {
+      convertedSec = totalSeconds / MI_TO_KM;
+      speedKmh = (3600 / totalSeconds) * MI_TO_KM;
+      document.getElementById('result-label').textContent = 'KM Temposu';
+      document.getElementById('result-unit').textContent = '/km';
+    } else {
+      convertedSec = totalSeconds * MI_TO_KM;
+      speedKmh = 3600 / totalSeconds;
+      document.getElementById('result-label').textContent = 'Mil Temposu';
+      document.getElementById('result-unit').textContent = '/mil';
+    }
+
+    document.getElementById('result-pace').textContent = secondsToMMSS(convertedSec);
+    document.getElementById('result-speed').textContent = speedKmh.toFixed(1) + ' km/s';
+    buildZones(totalSeconds);
+    document.getElementById('result-card').classList.add('visible');
+  }
+
+  function buildZones(centerSec) {
+    var MI_TO_KM = 1.60934;
+    var container = document.getElementById('zones-row');
+    container.innerHTML = '';
+    var steps = [-60, -30, 0, 30, 60];
+    steps.forEach(function(delta) {
+      var inputSec = centerSec + delta;
+      if (inputSec <= 0) return;
+      var converted = mode === 'mi' ? inputSec / MI_TO_KM : inputSec * MI_TO_KM;
+      var speed = mode === 'mi' ? (3600 / inputSec) * MI_TO_KM : 3600 / inputSec;
+      var chip = document.createElement('div');
+      chip.className = 'zone-chip' + (delta === 0 ? ' highlighted' : '');
+      chip.innerHTML = '<div class="zspeed">' + secondsToMMSS(converted) + '</div><div class="zpace">' + speed.toFixed(1) + ' km/s</div>';
+      container.appendChild(chip);
+    });
+  }
+
+  ['minutes', 'seconds'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').slice(0, 2);
+    });
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') convert();
+  });
+</script>
+</body>
+</html>
